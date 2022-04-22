@@ -144,6 +144,7 @@ class Debiasing():
 
     def anal_samples(self, ci_level, B, folder):
         q = (1-ci_level)/2
+        ind_tr = jnp.nonzero(B.flatten())
 
         B_biased_mean = jnp.mean(
             self.samples_biased, axis=0).reshape((self.p1, self.p2))
@@ -162,12 +163,18 @@ class Debiasing():
             (B.flatten() <= upper_biased)
         width_biased = upper_biased - lower_biased
 
+        prop_biased_sig = prop_biased[ind_tr]
+        width_biased_sig = width_biased[ind_tr]
+
         lower_unbiased = jnp.quantile(self.samples_unbiased, q=q, axis=0)
         upper_unbiased = jnp.quantile(self.samples_unbiased, q=1-q, axis=0)
 
         prop_unbiased = (B.flatten() >= lower_unbiased) * \
             (B.flatten() <= upper_unbiased)
         width_unbiased = upper_unbiased - lower_unbiased
+
+        prop_unbiased_sig = prop_unbiased[ind_tr]
+        width_unbiased_sig = width_unbiased[ind_tr]
 
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -196,7 +203,10 @@ class Debiasing():
         ans = {'mean_rmse': [np.mean((B_biased_mean-B)**2)**0.5, np.mean((B_unbiased_mean-B)**2)**0.5],
                'median_rmse': [np.mean((B_biased_median-B)**2)**0.5, np.mean((B_unbiased_median-B)**2)**0.5],
                'prop_of_covered': [np.mean(prop_biased), np.mean(prop_unbiased)],
-               'ci_width': [np.mean(width_biased), np.mean(width_unbiased)]}
+               'ci_width': [np.mean(width_biased), np.mean(width_unbiased)],
+               'prop_of_covered_sig': [np.mean(prop_biased_sig), np.mean(prop_unbiased_sig)],
+               'ci_width_sig': [np.mean(width_biased_sig), np.mean(width_unbiased_sig)]}
+
         df = pd.DataFrame(data=ans, index=['biased', 'unbiased'])
         df.to_csv(folder + '/' + 'df.csv', index=True)
         if self.model_sel:

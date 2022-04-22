@@ -1,0 +1,3 @@
+,mean_err,median_err,prop_of_covered,ci_width
+biased,0.005456268,0.0050992984,0.96999997,0.32312045
+unbiased,0.015403268,0.0064249644,1.0,0.68729794
